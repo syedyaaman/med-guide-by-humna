@@ -1,27 +1,34 @@
 import streamlit as st
 
 # ---------------- PAGE CONFIG ----------------
-st.set_page_config(page_title="HealthCare App", layout="wide")
+st.set_page_config(page_title="Med Guide Pro", layout="wide")
 
 # ---------------- SESSION STATE ----------------
+if "users" not in st.session_state:
+    st.session_state.users = {"admin": "1234"}
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-# ---------------- CUSTOM CSS ----------------
+# ---------------- CSS ----------------
 st.markdown("""
 <style>
 .navbar {
     background-color: #0B3C6D;
-    padding: 14px;
-    border-radius: 10px;
+    padding: 15px;
+    border-radius: 12px;
     color: white;
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: bold;
 }
-.search-box input {
-    border-radius: 20px !important;
+.hero {
+    background: linear-gradient(90deg, #2E6EB5, #4DA8DA);
+    padding: 40px;
+    border-radius: 20px;
+    color: white;
 }
 .card {
     padding: 20px;
@@ -30,34 +37,33 @@ st.markdown("""
     text-align: center;
     box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
 }
-.hero {
-    background-color: #2E6EB5;
-    padding: 40px;
-    border-radius: 20px;
-    color: white;
-}
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------- NAVBAR ----------------
-col1, col2, col3 = st.columns([2,5,2])
+col1, col2, col3 = st.columns([3,5,3])
 
 with col1:
-    st.markdown("<div class='navbar'><b>HealthCare+</b></div>", unsafe_allow_html=True)
+    st.markdown("<div class='navbar'>Med Guide Pro</div>", unsafe_allow_html=True)
 
 with col2:
-    st.text_input("Search medicines, services...", key="search")
+    st.text_input("🔍 Search medicines, services...")
 
 with col3:
     if st.session_state.logged_in:
-        st.success("Logged In")
+        st.success("Logged In ✅")
         if st.button("Logout"):
             st.session_state.logged_in = False
     else:
-        if st.button("Sign In"):
-            st.session_state.page = "login"
+        colA, colB = st.columns(2)
+        with colA:
+            if st.button("Sign In"):
+                st.session_state.page = "login"
+        with colB:
+            if st.button("Sign Up"):
+                st.session_state.page = "signup"
 
-# ---------------- LOGIN PAGE ----------------
+# ---------------- LOGIN ----------------
 if st.session_state.page == "login":
     st.title("🔐 Sign In")
 
@@ -65,20 +71,45 @@ if st.session_state.page == "login":
     pwd = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if user == "admin" and pwd == "1234":
+        if user in st.session_state.users and st.session_state.users[user] == pwd:
             st.session_state.logged_in = True
             st.session_state.page = "home"
             st.success("Login Successful!")
         else:
-            st.error("Invalid Credentials")
+            st.error("Invalid credentials")
+
+    if st.button("Go to Sign Up"):
+        st.session_state.page = "signup"
 
     st.stop()
 
-# ---------------- HERO SECTION ----------------
+# ---------------- SIGN UP ----------------
+if st.session_state.page == "signup":
+    st.title("📝 Create Account")
+
+    new_user = st.text_input("Create Username")
+    new_pwd = st.text_input("Create Password", type="password")
+
+    if st.button("Register"):
+        if new_user in st.session_state.users:
+            st.error("User already exists")
+        elif new_user == "" or new_pwd == "":
+            st.warning("Please fill all fields")
+        else:
+            st.session_state.users[new_user] = new_pwd
+            st.success("Account created! Please login")
+            st.session_state.page = "login"
+
+    if st.button("Back to Login"):
+        st.session_state.page = "login"
+
+    st.stop()
+
+# ---------------- HERO ----------------
 st.markdown("""
 <div class='hero'>
-<h1>Tired of Waiting at Hospital?</h1>
-<p>Book services instantly from your home</p>
+<h1>Welcome to Med Guide Pro</h1>
+<p>Your smart healthcare assistant</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -111,57 +142,42 @@ with col4:
 
 st.write("---")
 
-# ---------------- FEATURE PAGES ----------------
+# ---------------- YOUR OLD FEATURES ----------------
+def run_old_app():
+    st.subheader("🔧 Your Existing Features")
 
-# 🏥 PHARMACY
-if st.session_state.page == "pharmacy":
+    # 👉 PASTE YOUR OLD CODE HERE
+    # Example:
+    st.write("This is where your previous ML model / PDF generator / logic will run")
+
+# ---------------- ROUTING ----------------
+if st.session_state.page == "home":
+    run_old_app()
+
+elif st.session_state.page == "pharmacy":
     st.title("💊 Pharmacy")
-
-    uploaded_file = st.file_uploader("Upload Prescription", type=["pdf", "jpg", "png"])
-
-    if uploaded_file:
-        st.success("Prescription uploaded successfully!")
-
+    st.write("Integrate your pharmacy feature here")
     if st.button("⬅ Back"):
         st.session_state.page = "home"
 
-# 👨‍⚕️ DOCTOR
 elif st.session_state.page == "doctor":
     st.title("👨‍⚕️ Doctor Consultation")
-
-    name = st.text_input("Enter your name")
-    issue = st.text_area("Describe your issue")
-
-    if st.button("Book Appointment"):
-        st.success("Appointment booked!")
-
+    st.write("Integrate your doctor feature here")
     if st.button("⬅ Back"):
         st.session_state.page = "home"
 
-# 🏠 HOME CARE
 elif st.session_state.page == "homecare":
     st.title("🏠 Home Services")
-
-    service = st.selectbox("Select Service", ["Nurse", "Physiotherapy", "Elder Care"])
-
-    if st.button("Book Service"):
-        st.success(f"{service} booked!")
-
+    st.write("Integrate your home care feature here")
     if st.button("⬅ Back"):
         st.session_state.page = "home"
 
-# 🧪 LAB TESTS
 elif st.session_state.page == "lab":
     st.title("🧪 Lab Tests")
-
-    test = st.selectbox("Select Test", ["Blood Test", "Diabetes", "Covid Test"])
-
-    if st.button("Book Test"):
-        st.success(f"{test} booked!")
-
+    st.write("Integrate your lab test feature here")
     if st.button("⬅ Back"):
         st.session_state.page = "home"
 
 # ---------------- FOOTER ----------------
 st.write("---")
-st.write("© 2026 HealthCare+ | Your Digital Health Partner")
+st.write("© 2026 Med Guide Pro | Smart Healthcare App")
