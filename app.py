@@ -1,183 +1,184 @@
 import streamlit as st
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from PyPDF2 import PdfReader
+from fpdf import FPDF
+from PIL import Image
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(page_title="Med Guide Pro", layout="wide")
+st.set_page_config(layout="wide")
 
-# ---------------- SESSION STATE ----------------
+# ---------------- AUTH SYSTEM ----------------
 if "users" not in st.session_state:
-    st.session_state.users = {"admin": "1234"}
+    st.session_state.users = {}
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-if "page" not in st.session_state:
-    st.session_state.page = "home"
+if "current_user" not in st.session_state:
+    st.session_state.current_user = ""
 
-# ---------------- CSS ----------------
-st.markdown("""
-<style>
-.navbar {
-    background-color: #0B3C6D;
-    padding: 15px;
-    border-radius: 12px;
-    color: white;
-    font-size: 22px;
-    font-weight: bold;
-}
-.hero {
-    background: linear-gradient(90deg, #2E6EB5, #4DA8DA);
-    padding: 40px;
-    border-radius: 20px;
-    color: white;
-}
-.card {
-    padding: 20px;
-    border-radius: 15px;
-    background-color: #F5F7FA;
-    text-align: center;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
-}
-</style>
-""", unsafe_allow_html=True)
+def signup(username, password):
+    if username in st.session_state.users:
+        return False
+    st.session_state.users[username] = password
+    return True
 
-# ---------------- NAVBAR ----------------
-col1, col2, col3 = st.columns([3,5,3])
+def login(username, password):
+    if username in st.session_state.users and st.session_state.users[username] == password:
+        st.session_state.logged_in = True
+        st.session_state.current_user = username
+        return True
+    return False
+
+def logout():
+    st.session_state.logged_in = False
+    st.session_state.current_user = ""
+
+# ---------------- HEADER ----------------
+col1, col2 = st.columns([3,1])
 
 with col1:
-    st.markdown("<div class='navbar'>Med Guide Pro</div>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#1f4e79;'>MedGuide Pro</h2>", unsafe_allow_html=True)
 
 with col2:
-    st.text_input("🔍 Search medicines, services...")
-
-with col3:
     if st.session_state.logged_in:
-        st.success("Logged In ✅")
+        st.write(f"👤 {st.session_state.current_user}")
         if st.button("Logout"):
-            st.session_state.logged_in = False
+            logout()
     else:
-        colA, colB = st.columns(2)
-        with colA:
-            if st.button("Sign In"):
-                st.session_state.page = "login"
-        with colB:
-            if st.button("Sign Up"):
-                st.session_state.page = "signup"
+        auth_option = st.selectbox("Account", ["Login", "Sign Up"])
 
-# ---------------- LOGIN ----------------
-if st.session_state.page == "login":
-    st.title("🔐 Sign In")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
 
-    user = st.text_input("Username")
-    pwd = st.text_input("Password", type="password")
+        if auth_option == "Sign Up":
+            if st.button("Create Account"):
+                if signup(username, password):
+                    st.success("Account created!")
+                else:
+                    st.error("User already exists")
 
-    if st.button("Login"):
-        if user in st.session_state.users and st.session_state.users[user] == pwd:
-            st.session_state.logged_in = True
-            st.session_state.page = "home"
-            st.success("Login Successful!")
+        if auth_option == "Login":
+            if st.button("Login"):
+                if login(username, password):
+                    st.success("Logged in!")
+                else:
+                    st.error("Invalid credentials")
+
+# ---------------- HOME PAGE ----------------
+if st.session_state.logged_in:
+
+    # HERO SECTION
+    st.markdown("""
+    <div style='background-color:#e6f0ff;padding:30px;border-radius:15px'>
+    <h1>AI Health Assistant</h1>
+    <p>Analyze reports, detect risks, and get smart suggestions instantly</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.write("")
+
+    # CARDS SECTION
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.image("https://cdn-icons-png.flaticon.com/512/2966/2966485.png", width=100)
+        st.subheader("Upload Report")
+        st.write("Analyze your medical reports instantly")
+
+    with col2:
+        st.image("https://cdn-icons-png.flaticon.com/512/387/387561.png", width=100)
+        st.subheader("AI Diagnosis")
+        st.write("Smart prediction using AI")
+
+    with col3:
+        st.image("https://cdn-icons-png.flaticon.com/512/4712/4712027.png", width=100)
+        st.subheader("Health Insights")
+        st.write("Get risk levels and suggestions")
+
+    st.markdown("---")
+
+    # ---------------- USER INPUT ----------------
+    st.sidebar.header("Profile")
+
+    age = st.sidebar.number_input("Age", 1, 100)
+    gender = st.sidebar.selectbox("Gender", ["Male", "Female", "Other"])
+
+    symptoms = st.sidebar.multiselect(
+        "Symptoms",
+        ["Fever", "Cough", "Headache", "Chest Pain", "Fatigue"]
+    )
+
+    # ---------------- MODEL ----------------
+    data = {
+        "Fever": [1,1,0,0,1,0],
+        "Cough": [1,1,0,0,0,1],
+        "Headache": [1,0,1,0,1,1],
+        "Chest Pain": [0,0,1,1,0,1],
+        "Fatigue": [1,1,1,0,1,1],
+        "Disease": ["Flu","Cold","Migraine","Heart Issue","Viral Infection","Infection"]
+    }
+
+    df = pd.DataFrame(data)
+    X = df.drop("Disease", axis=1)
+    y = df["Disease"]
+
+    model = DecisionTreeClassifier()
+    model.fit(X, y)
+
+    # ---------------- PDF ----------------
+    uploaded_file = st.file_uploader("Upload Medical Report", type=["pdf"])
+
+    report_text = ""
+
+    if uploaded_file:
+        reader = PdfReader(uploaded_file)
+        for page in reader.pages:
+            text = page.extract_text()
+            if text:
+                report_text += text.lower()
+
+        st.success("Report uploaded!")
+
+    # ---------------- ANALYSIS ----------------
+    if st.button("Run Analysis"):
+
+        if len(symptoms) == 0:
+            st.warning("Select symptoms")
         else:
-            st.error("Invalid credentials")
+            input_data = [1 if s in symptoms else 0 for s in ["Fever","Cough","Headache","Chest Pain","Fatigue"]]
+            prediction = model.predict([input_data])[0]
 
-    if st.button("Go to Sign Up"):
-        st.session_state.page = "signup"
+            st.subheader("Result")
 
-    st.stop()
+            st.write(f"Condition: {prediction}")
 
-# ---------------- SIGN UP ----------------
-if st.session_state.page == "signup":
-    st.title("📝 Create Account")
+            if "Chest Pain" in symptoms:
+                risk = "High"
+                st.error("High Risk 🚨")
+            elif len(symptoms) >= 3:
+                risk = "Moderate"
+                st.warning("Moderate Risk")
+            else:
+                risk = "Low"
+                st.success("Low Risk")
 
-    new_user = st.text_input("Create Username")
-    new_pwd = st.text_input("Create Password", type="password")
+            # PDF DOWNLOAD
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
 
-    if st.button("Register"):
-        if new_user in st.session_state.users:
-            st.error("User already exists")
-        elif new_user == "" or new_pwd == "":
-            st.warning("Please fill all fields")
-        else:
-            st.session_state.users[new_user] = new_pwd
-            st.success("Account created! Please login")
-            st.session_state.page = "login"
+            pdf.cell(200, 10, txt="MedGuide Report", ln=True)
+            pdf.cell(200, 10, txt=f"Condition: {prediction}", ln=True)
+            pdf.cell(200, 10, txt=f"Risk: {risk}", ln=True)
 
-    if st.button("Back to Login"):
-        st.session_state.page = "login"
+            pdf.output("report.pdf")
 
-    st.stop()
+            with open("report.pdf", "rb") as f:
+                st.download_button("Download Report", f)
 
-# ---------------- HERO ----------------
-st.markdown("""
-<div class='hero'>
-<h1>Welcome to Med Guide Pro</h1>
-<p>Your smart healthcare assistant</p>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown("---")
+    st.write("⚠️ Not a real medical diagnosis")
 
-st.write("")
-
-# ---------------- SERVICES ----------------
-st.subheader("Our Services")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.image("https://cdn-icons-png.flaticon.com/512/2966/2966483.png")
-    if st.button("Pharmacy"):
-        st.session_state.page = "pharmacy"
-
-with col2:
-    st.image("https://cdn-icons-png.flaticon.com/512/3774/3774299.png")
-    if st.button("Doctor"):
-        st.session_state.page = "doctor"
-
-with col3:
-    st.image("https://cdn-icons-png.flaticon.com/512/4320/4320371.png")
-    if st.button("Home Care"):
-        st.session_state.page = "homecare"
-
-with col4:
-    st.image("https://cdn-icons-png.flaticon.com/512/2785/2785819.png")
-    if st.button("Lab Tests"):
-        st.session_state.page = "lab"
-
-st.write("---")
-
-# ---------------- YOUR OLD FEATURES ----------------
-def run_old_app():
-    st.subheader("🔧 Your Existing Features")
-
-    # 👉 PASTE YOUR OLD CODE HERE
-    # Example:
-    st.write("This is where your previous ML model / PDF generator / logic will run")
-
-# ---------------- ROUTING ----------------
-if st.session_state.page == "home":
-    run_old_app()
-
-elif st.session_state.page == "pharmacy":
-    st.title("💊 Pharmacy")
-    st.write("Integrate your pharmacy feature here")
-    if st.button("⬅ Back"):
-        st.session_state.page = "home"
-
-elif st.session_state.page == "doctor":
-    st.title("👨‍⚕️ Doctor Consultation")
-    st.write("Integrate your doctor feature here")
-    if st.button("⬅ Back"):
-        st.session_state.page = "home"
-
-elif st.session_state.page == "homecare":
-    st.title("🏠 Home Services")
-    st.write("Integrate your home care feature here")
-    if st.button("⬅ Back"):
-        st.session_state.page = "home"
-
-elif st.session_state.page == "lab":
-    st.title("🧪 Lab Tests")
-    st.write("Integrate your lab test feature here")
-    if st.button("⬅ Back"):
-        st.session_state.page = "home"
-
-# ---------------- FOOTER ----------------
-st.write("---")
-st.write("© 2026 Med Guide Pro | Smart Healthcare App")
+else:
+    st.info("Please login to use the app")
