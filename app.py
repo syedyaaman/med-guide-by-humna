@@ -262,8 +262,15 @@ if "prediction" in st.session_state:
 
     pdf.output("report.pdf")
 
-    with open("report.pdf", "rb") as f:
-        st.download_button("📥 Download Report", f)
+    with open("report.pdf", "rb") as file:
+        PDFbyte = file.read()
+
+    st.download_button(
+        label="📥 Download Report",
+        data=PDFbyte,
+        file_name="medical_report.pdf",
+        mime="application/pdf"
+    ) 
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
