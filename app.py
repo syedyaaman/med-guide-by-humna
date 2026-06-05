@@ -221,26 +221,26 @@ with tab3:
 
     if user_input:
 
-    prompt = f"""
-    You are a helpful medical assistant.
+        prompt = f"""
+        You are a helpful medical assistant.
 
-    Age: {age}
-    Gender: {gender}
-    Symptoms: {', '.join(symptoms)}
+        Age: {age}
+        Gender: {gender}
+        Symptoms: {', '.join(symptoms)}
 
-    User question:
-    {user_input}
+        User question:
+        {user_input}
 
-    Provide educational information only.
-    Do not provide a definitive diagnosis.
-    """
+        Provide educational information only.
+        Do not provide a definitive diagnosis.
+        """
 
-    response = model_ai.generate_content(prompt)
+        response = model_ai.generate_content(prompt)
 
-    reply = response.text
+        reply = response.text
 
-    st.session_state.chat_history.append(("You", user_input))
-    st.session_state.chat_history.append(("AI", reply)) 
+        st.session_state.chat_history.append(("You", user_input))
+        st.session_state.chat_history.append(("AI", reply)) 
 
     for role, msg in st.session_state.chat_history:
         if role == "You":
