@@ -220,13 +220,27 @@ with tab3:
     user_input = st.text_input("Ask anything")
 
     if user_input:
-        if "prediction" in st.session_state:
-            reply = f"Based on {st.session_state.prediction}, monitor symptoms and consult doctor."
-        else:
-            reply = "Run analysis first."
 
-        st.session_state.chat_history.append(("You", user_input))
-        st.session_state.chat_history.append(("AI", reply))
+    prompt = f"""
+    You are a helpful medical assistant.
+
+    Age: {age}
+    Gender: {gender}
+    Symptoms: {', '.join(symptoms)}
+
+    User question:
+    {user_input}
+
+    Provide educational information only.
+    Do not provide a definitive diagnosis.
+    """
+
+    response = model_ai.generate_content(prompt)
+
+    reply = response.text
+
+    st.session_state.chat_history.append(("You", user_input))
+    st.session_state.chat_history.append(("AI", reply)) 
 
     for role, msg in st.session_state.chat_history:
         if role == "You":
