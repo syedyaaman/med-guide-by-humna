@@ -4,3 +4,4 @@ scikit-learn
 fpdf
 PyPDF2
 Pillow
+google-generativeai
