@@ -110,15 +110,28 @@ with c3:
 st.markdown("---")
 
 # ---------------- SIDEBAR ----------------
+# ---------------- SIDEBAR ----------------
 st.sidebar.header("User Profile")
 
 age = st.sidebar.number_input("Age", 1, 100)
-gender = st.sidebar.selectbox("Gender", ["Male", "Female", "Other"])
+
+gender = st.sidebar.selectbox(
+    "Gender",
+    ["Male", "Female", "Other"]
+)
+
+weight = st.sidebar.number_input(
+    "Weight (kg)",
+    min_value=1.0,
+    max_value=300.0,
+    value=70.0,
+    step=0.5
+)
 
 symptoms = st.sidebar.multiselect(
     "Symptoms",
     ["Fever", "Cough", "Headache", "Chest Pain", "Fatigue"]
-)
+) 
 
 # ---------------- MODEL ----------------
 data = {
@@ -226,6 +239,7 @@ with tab3:
 
         Age: {age}
         Gender: {gender}
+        Weight: {weight} kg
         Symptoms: {', '.join(symptoms)}
 
         User question:
