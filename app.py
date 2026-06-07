@@ -127,7 +127,13 @@ weight = st.sidebar.number_input(
     value=70.0,
     step=0.5
 )
-
+height = st.sidebar.number_input(
+    "Height (cm)",
+    min_value=50.0,
+    max_value=250.0,
+    value=170.0,
+    step=1.0
+)
 symptoms = st.sidebar.multiselect(
     "Symptoms",
     ["Fever", "Cough", "Headache", "Chest Pain", "Fatigue"]
@@ -240,6 +246,7 @@ with tab3:
         Age: {age}
         Gender: {gender}
         Weight: {weight} kg
+        Height: {height} cm
         Symptoms: {', '.join(symptoms)}
 
         User question:
